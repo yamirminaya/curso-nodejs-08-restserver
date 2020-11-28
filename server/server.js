@@ -1,6 +1,16 @@
-require('./config/config');
-
+//require('./config/config');
+// process.env.NODE_ENV = process.env.NODE_ENV || 'dev';
+// if (process.env.NODE_ENV === 'dev') {
+//   require('dotenv').config({
+//     path: `${__dirname}/.env.${process.env.NODE_ENV}`,
+//   });
+// } else {
+//   require('dotenv').config();
+// }
+process.env.NODE_ENV = process.env.NODE_ENV || 'dev';
+require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 
 const app = express();
@@ -10,25 +20,42 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
-app.get('/usuario', (req, res) => {
-  res.json('GET USUARIO');
+app.use(require('./routes/usuario'));
+
+// MONGO DB
+// let uri = ``;
+console.log(process.env.NODE_ENV);
+// if (process.env.NODE_ENV == 'dev') {
+//   const uri = `mongodb://localhost:27017/cafe`;
+// } else {
+//   let uri = `mongodb+srv://${process.env.DBUSER}:${process.env.DBPASS}@cluster0.la8ac.mongodb.net/${process.env.DBNAME}`;
+// }
+// console.log(uri);
+const uri =
+  process.env.NODE_ENV == 'dev'
+    ? `mongodb://localhost:27017/cafe`
+    : `mongodb+srv://${process.env.DBUSER}:${process.env.DBPASS}@cluster0.la8ac.mongodb.net/${process.env.DBNAME}`;
+
+// let uri = `mongodb://localhost:27017/cafe`;
+
+const db = mongoose.connection;
+
+mongoose
+  .connect(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+    useCreateIndex: true,
+  })
+  .catch((err) => console.log(err));
+
+// Eventos
+db.on('open', (_) => {
+  console.log('Database is connected to', uri);
 });
 
-app.post('/usuario', (req, res) => {
-  let body = req.body;
-  if (body.nombre === undefined) {
-    res.status(400).json({
-      ok: false,
-      mensaje: 'Nombre necesario',
-    });
-  } else {
-    res.json({ persona: body });
-  }
-});
-
-app.put('/usuario/:id', (req, res) => {
-  let id = req.params.id;
-  res.json({ id });
+db.on('error', (err) => {
+  console.log(err);
 });
 
 app.listen(process.env.PORT, () => {
