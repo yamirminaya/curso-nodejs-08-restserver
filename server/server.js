@@ -20,11 +20,12 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
-app.use(require('./routes/usuario'));
+// Configuración global de rutas
+app.use(require('./routes/index'));
 
 // MONGO DB
 // let uri = ``;
-console.log(process.env.NODE_ENV);
+//console.log(process.env.NODE_ENV);
 // if (process.env.NODE_ENV == 'dev') {
 //   const uri = `mongodb://localhost:27017/cafe`;
 // } else {
