@@ -11,17 +11,40 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'dev';
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
+const path = require('path');
+// const cors = require('cors');
 
 const app = express();
+
+const bodyParser = require('body-parser');
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
+// habilitar la carpeta public
+app.use(express.static(path.resolve(__dirname, '../public')));
+
 // Configuración global de rutas
 app.use(require('./routes/index'));
+
+/************************************/
+// app.use((req, res, next) => {
+//   // Dominio que tengan acceso (ej. 'http://example.com')
+//   res.setHeader('Access-Control-Allow-Origin', '*');
+
+//   // Metodos de solicitud que deseas permitir
+//   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+
+//   // Encabecedados que permites (ej. 'X-Requested-With,content-type')
+//   res.setHeader('Access-Control-Allow-Headers', '*');
+
+//   next();
+// });
+
+// app.use(cors());
+/************************************/
 
 // MONGO DB
 // let uri = ``;
