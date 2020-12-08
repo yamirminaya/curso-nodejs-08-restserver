@@ -1,40 +1,40 @@
-const express = require('express');
+const express = require('express')
 
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
 
 // Google SignIn
-const { OAuth2Client } = require('google-auth-library');
-const client = new OAuth2Client(process.env.CLIENT_ID);
+const { OAuth2Client } = require('google-auth-library')
+const client = new OAuth2Client(process.env.CLIENT_ID)
 
-const Usuario = require('../models/usuario');
-const app = express();
+const Usuario = require('../models/usuario')
+const app = express()
 
 // Configuración de Google
 async function verify(token) {
   const ticket = await client.verifyIdToken({
     idToken: token,
     audience: process.env.CLIENT_ID,
-  });
-  const payload = ticket.getPayload();
+  })
+  const payload = ticket.getPayload()
   return {
     nombre: payload.name,
     email: payload.email,
     img: payload.picture,
     google: true,
-  };
+  }
 }
 //verify().catch(console.error);
 
 app.post('/google', async (req, res) => {
-  let token = req.body.idtoken;
+  let token = req.body.idtoken
   let googleUser = await verify(token).catch((err) => {
-    return res.status(403).json({ ok: false, err });
-  });
+    return res.status(403).json({ ok: false, err })
+  })
 
   Usuario.findOne({ email: googleUser.email }, (err, usuarioDB) => {
     if (err) {
-      return res.status(500).json({ ok: false, err });
+      return res.status(500).json({ ok: false, err })
     }
 
     if (usuarioDB) {
@@ -42,13 +42,14 @@ app.post('/google', async (req, res) => {
         let token = jwt.sign(
           {
             usuario: {
+              _id: usuarioDB._id,
               email: usuarioDB.email,
               nombre: usuarioDB.nombre,
             },
           },
           process.env.SEED,
           { expiresIn: process.env.CADUCIDAD_TOKEN }
-        );
+        )
 
         return res.json({
           ok: true,
@@ -57,62 +58,63 @@ app.post('/google', async (req, res) => {
             nombre: usuarioDB.nombre,
           },
           token,
-        });
+        })
       } else {
         return res.status(400).json({
           ok: false,
           err: { message: 'Debe de usar autenticación normal' },
-        });
+        })
       }
     } else {
       // Si usuario no existe en BD (usuario nuevo)
-      let usuario = new Usuario();
-      usuario.nombre = googleUser.nombre;
-      usuario.email = googleUser.email;
-      usuario.img = googleUser.img;
-      usuario.google = true;
-      usuario.password = bcrypt.hashSync(':)', 10);
+      let usuario = new Usuario()
+      usuario.nombre = googleUser.nombre
+      usuario.email = googleUser.email
+      usuario.img = googleUser.img
+      usuario.google = true
+      usuario.password = bcrypt.hashSync(':)', 10)
 
       usuario.save((err, usuarioDB) => {
-        console.log(err);
         if (err) {
-          return res.status(500).json({ ok: false, err });
+          return res.status(500).json({ ok: false, err })
         }
 
         let token = jwt.sign(
           {
             usuario: {
+              _id: usuarioDB._id,
               email: usuarioDB.email,
               nombre: usuarioDB.nombre,
             },
           },
           process.env.SEED,
           { expiresIn: process.env.CADUCIDAD_TOKEN }
-        );
+        )
 
         res.json({
           ok: true,
           usuario: {
+            _id: usuarioDB._id,
             email: usuarioDB.email,
             nombre: usuarioDB.nombre,
           },
           token,
-        });
-      });
+        })
+      })
     }
-  });
+  })
 
   //res.json({ usuario: googleUser });
-});
+})
 
 app.post('/login', (req, res) => {
-  let body = req.body;
+  let body = req.body
   Usuario.findOne({ email: body.email }, (err, usuarioDB) => {
     if (err) {
       return res.status(500).json({
         ok: false,
         err,
-      });
+      })
     }
 
     if (!usuarioDB) {
@@ -121,7 +123,7 @@ app.post('/login', (req, res) => {
         err: {
           message: '(Usuario) y/o contraseña incorrectos',
         },
-      });
+      })
     }
 
     if (!bcrypt.compareSync(body.password, usuarioDB.password)) {
@@ -130,27 +132,30 @@ app.post('/login', (req, res) => {
         err: {
           message: 'Usuario y/o (contraseña) incorrectos',
         },
-      });
+      })
     }
 
     //usuarioDB
     let token = jwt.sign(
       {
         usuario: {
+          _id: usuarioDB._id,
           email: usuarioDB.email,
           nombre: usuarioDB.nombre,
         },
       },
       process.env.SEED,
       { expiresIn: process.env.CADUCIDAD_TOKEN }
-    );
+    )
+
+    console.log(token)
 
     res.json({
       ok: true,
       usuario: usuarioDB,
       token,
-    });
-  });
-});
+    })
+  })
+})
 
-module.exports = app;
+module.exports = app
