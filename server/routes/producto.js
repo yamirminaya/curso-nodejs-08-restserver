@@ -64,6 +64,13 @@ app.get('/productos/:id', async (req, res) => {
 // ===========================
 // Buscar productos
 // ===========================
+/**
+ * * skskskk
+ * ! sdkdkdk
+ * ? dkdkdk
+ * TODO: Refaccionar
+ * @param :termino
+ */
 app.get('/productos/buscar/:termino', verificaToken, (req, res) => {
   let termino = req.params.termino
 
